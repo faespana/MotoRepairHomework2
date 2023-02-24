@@ -1,0 +1,1566 @@
+1. Iniciar el npm init -y
+
+2. Crear el archivo app.js y un clg con "HOLA" para ser mostrado en el nodemon 
+
+3. Abrir el cmd con nodemon y llamar a app.js
+
+4. Crear las carpetas controllers, models, routes.
+
+5. Crear los archivos .env on el puerto PORT = 3000 (e.g.) y .env.template con PORT = 
+
+6. Crear el archivo .prettierrc
+	6.1. Pasarle el siguiente objeto {
+    							"tabWidth": 2,
+    							"arrowParens": "avoid",
+   							"singleQuote": true
+							}
+
+7. Instalar los paquetes npm i express cors dotenv (notar que se instaló la carpeta 
+   node_modules y las dependencias.
+
+8. Crear el archivo .gitignore y dentro escribir /.env /node_modules
+
+9. Configurar mis variables de entorno en app.js require("dotenv").config()
+
+10. A continuacion vamos a crear un archivo server.js dentro de la carpeta models e importar 
+   express (const express = require("express")) y cors (const cors = require("cors"))
+	10.1. Crear la clase Server y exportarla: class Server {
+
+								  }
+		module.exports = Server
+	10.2.	Dentro de la clase, crear la funcion contructora con la siguiente informacion:
+		
+		    constructor() {
+        		this.app = express()
+        		this.port = process.env.PORT || 3000
+        		this.paths = {
+            		users: "(Aqui va el end point)",
+            		repairs: "/api/v1/repairs"
+        			}
+    			}
+	10.3. Dentro de la clase, crear mi funcion middleware con la siguiente informacion:
+
+		    middlewares() {
+        		this.app.use(cors())
+        		this.app.use(express.json())
+    		    {
+
+
+	10.4. Dentro de la clase, crear mi funcion routes (por el momento va vacia).
+
+	10.5. Dentro de la clase, crear mi funcion listen con la siguiente informacion:
+		
+		    listen() {
+       		this.app.listen(this.port, () => {
+       	 	console.log(`Server listening on port ${this.port}`)
+       		}) 
+    			} 
+
+	10.6. Llamar a las funciones this.middlewares() / this.routes() dentro del constructor
+
+11. Instanciar la clase para que se ejecute el contructor dentro de app.js:
+	
+	const Server = require('./models/server')
+	const server = new Server()
+	server.listen()
+
+12. Dentro de la carpeta routes, creamos los archivos con nombres segun los endpoints que 
+    se pusieron en los paths. eg. users.routes.js
+	
+	12.1. Colocar la siguiente informacion segun los CRUD's que se se requiran, no olvidar
+		exportar (el procedimiento se repite de acuerdo a los endpoints):
+	
+		const { Router } = require("express");
+
+		const router = Router()
+
+		router.get("", findAllUsers)
+		router.get("/:id", findUserById)
+
+		router.post("", createUser)
+
+		router.patch("/:id", updateUserById)
+
+		router.delete("/:id", desableUserById)	  
+
+		module.exports = {
+    			UsersRouter: router
+		}
+
+13. Notando que se ha exportado en el routes, ir al server y en la funcion 
+	routes()
+		{
+		this.app.use(this.paths.users, UsersRouter) (users/nombre del end point) 
+		(UsersRouter / nombre de la exportacion no olvidar importarlo)	
+	}   
+
+
+14. En la carpeta de controllers, se debe crear archivos similares a los routes, pero con el
+    nombre controllers. (Repetir el proceso con todos los demas CRUDs de las rutas)
+
+	exports.findAllUsers = (req, res) => {
+    		res.json({
+        		status: "success",
+        		message: "Method GET was Called"
+    			})
+		}
+
+15. En los POST de los controladores, se le hace el req al body y se desestructura los valores
+	que se van a pasar en el json, e.d. quedaria:
+  
+exports.createUser = (req, res) => {
+
+    const { id, name, email, password, role, status } = req.body (los valores dependen de cliente)
+
+    res.json({
+        status: "success",
+        massagge: "Method POST was Called",
+        user: {
+            id,
+            name,
+            email,
+            password,
+            role,
+            status
+        }
+    })
+} (en el postmanse uno se ubica en body, raw y se llenan los datos)
+
+
+16. En los PATCH de los controladores, se le hace el req al params y se desestructura los valores
+	que se van a pasar en el json, e.d. quedaria:
+
+exports.updateRepairById = (req, res) => {
+
+    const {id} = req.params
+    const {date, status, userid} = req.body
+
+    res.json({
+        status: "success",
+        messagge: "Method PATCH was Called",
+        repair: {
+            id,
+            date,
+            status,
+            userid
+        }
+    })
+
+}
+
+
+17. Conexion a la base de datos: Abrir postgres introduciendo la contrasena con la que fue insta-
+    lada 094493236.Fe.
+	17.1. En el cmd en la carpeta que se esta trabajando, se debe instalar las siguientes paque-
+		terias con npm i pg pg-hstore sequelize (comprobar que la instalacion haya sido correc-
+		ta en las dependencias)
+	17.2. Click derecho en Databases de pgAdmin y entrar a Create-Database colocar el nombre
+		que le vamos a colocar a nuestra base de datos.
+ 
+18. En VS crear la carpeta database y dentro un archivo db.js
+	18.1. Importar Sequelize: const { Sequelize } = require("sequelize")
+	18.2. Crear la clase Sequilize:
+		
+	const db = new Sequelize({
+    		dialect: 'postgres',
+    		host: 'localhost',
+    		username: process.env.DB_USERNAME, (info en .env DB_USERNAME = postgres)
+    		password: process.env.DB_PASSWORD, (info en .env DB_PASSWORD = 094493236.Fe)
+    		database: 'e-commerceDB',
+    		logging: false,
+	});
+
+module.exports = { db }; 
+
+		
+19. Creamos un metodo en el servidor, debajo de las rutas (db debe importarse en el servidor)
+
+    database() {
+        db.authenticate()
+            .then(() => console.log('Database authenticated'))
+            .catch(error => console.log(error));
+
+        db.sync()
+            .then(() => console.log('Database synced'))
+            .catch(error => console.log(error));
+    }
+
+	19.1. Llamarlo dentro del constructor encima del this.middlewares(): this.database()
+
+
+20. En la carpeta models vamos a crear un archivo que se llame user.model.js
+	
+	20.1. Importar desde sequelize DataTypes quedando y db, pero teniendo el archivo abierto:
+		
+		const { DataTypes } = require("sequelize");
+
+		const { db } = require("../database/db");
+
+	20.2. Crear una variable pero con mayusculas con el nombre del modelo y definir db de la 
+		siguiente, manera no olvidarse de exportar:
+		
+		const User = db.define("user", {
+    
+		})
+
+
+		module.exports = User;
+
+
+	20.3. Dentro de User (y Product) en su objeto se debe ingresar la siguiente info, poner atencion a id y
+		status:
+
+		    id: {
+        			primaryKey: true,
+        			autoIncrement: true,
+        			allowNull: false,
+        			type: DataTypes.INTEGER,
+   			 },
+
+    			password: {
+        			type: DataTypes.STRING,
+        			allowNull: false,
+    			},
+    			
+			role: {
+        			type: DataTypes.STRING,
+        			allowNull: false, (siempre va a tener un valor)
+        			defaultValue: "user", (lo nombre por default)
+        			enum: ["user", "admin"] (puede ser lo uno o lo otro solo permite ese tipo
+									de datos)
+			},
+    			
+			status: {
+        			type: DataTypes.BOOLEAN,
+       			allowNull: false,
+        			defaultValue: true, (cada vez que se cree un usuario va a permanecer 
+								activo a menos que se lo elimine)
+    			},
+
+
+21. Trabajando con el postman y crear una nueva collection
+	21.1. Presionar el boton new que se encuentra a lado de My workspace, y crear una nueva
+		collection (ECOMMERCE)
+
+	21.2. En los tres puntitos que se encuentra a lado de la collection (ECOMMERCE), se debe 
+		colocar los nombres de acuerdo a los endpoints, finalmente probar los post, sin el 
+		status, ya que se pone por defecto.
+
+
+22. Creando los primeros registros en la base de datos
+
+	22.1. En product.controllers, en el POST (createProduct), se solicita al body lo que se desea
+		mandar a la base de datos:
+		
+    		const { title, description, quantity, categoryId, userId, price } = req.body;
+	
+	22.2. Creamos la promesa con async y await, y al nombre del modelo (Product) se le aplica el 
+		metodo create, quedando de la siguiente manera (ojo con los estados):
+
+		createProduct = async (req, res) => {
+    			const { title, description, quantity, categoryId, userId, price } =req.body; 
+			//evita que el front mande propiedades que esten de mas
+
+    			const newProduct = await Product.create({
+
+        			title: title.toLowerCase(), (evita que el usario ponga mayusculas y minuscula intercaladas)
+        			description: description.toLowerCase(),
+        			quantity,
+        			categoryId,
+        			userId,
+        			price,
+    			});
+
+    			
+			res.status(201).json({
+        			status: 'success',
+        			message: 'The product was created successfully',
+        			newProduct,
+    			});
+		};
+
+
+	22.3. Para una mejor experiencia durante la actualizacion de los CRUDs y que aparezcan o no 
+		en las bases de datos, se debe mejorar, primero el POST, despues el GET y el GET por id,
+		luego el PATCH (que es por id) y finalemente el DELETE (que se parece el PATCH solo que
+		se logra ocultando al usuario)
+
+		 const findUsers = async (req, res) => {
+    			const users = await User.findAll({
+        		where: {
+            		status: true,
+        		},
+    		});
+
+    			res.status(200).json({
+        			status: 'success',
+        			message: 'The users were found successfully',
+        			users,
+    			});
+		};
+
+		const findUser = async (req, res) => {
+    			const { id } = req.params;
+
+    			const user = await User.findOne({
+        			where: {
+            			id,
+            			status: true,
+        			},
+    			});
+
+    		if (!user) {
+        		return res.status(404).json({
+            		status: 'error',
+            		message: 'The user was not found',
+        		});
+    		}
+
+    		res.status(200).json({
+        		status: 'success',
+        		message: 'The user was found successfully',
+        		user,
+    		});
+	};
+
+
+	const createUser = async (req, res) => {
+    		const { username, email, password } = req.body;
+
+    		const newUser = await User.create({
+        		username,
+        		email,
+        		password,
+    		});
+
+    		res.status(201).json({
+        		status: 'success',
+        		message: 'The user was created successfully',
+        		newUser,
+    		});
+	};
+
+
+	const updateUser = async (req, res) => {
+    		const { id } = req.params;
+
+    		const { username, email } = req.body;
+
+    		const user = await User.findOne({
+        		where: {
+            		id,
+            		status: true,
+        		},
+    		});
+
+    		if (!user) {
+        		return res.status(404).json({
+            		status: 'error',
+            		message: 'The user was not found',
+   	    		 });
+   		 }
+
+    		const updatedUser = await user.update({
+       		username,
+        		email,
+    		});
+
+    		res.json({
+        		status: 'success',
+       		 message: 'The user has been updated successfully',
+        		updatedUser,
+   		 });
+	};
+
+
+		const deleteUser = async (req, res) => {
+   			 const { id } = req.params;
+
+    			const user = await User.findOne({
+        			where: {
+           				 id,
+           				 status: true,
+        			},
+    			});
+
+    		if (!user) {
+        		return res.status(404).json({
+            		status: 'error',
+            		message: 'The user was not fount',
+        		});
+    		}
+
+    		await user.update({ status: false });
+
+		!!Por ejemplo si se quisiera eliminar completamente en la base de datos!!
+		
+				***************await product.destroy()*************
+
+    		res.status(200).json({
+        		status: 'success',
+        		message: 'The user has been delated',
+    		});
+	};
+
+*********************Para conocer mas sobre los status ver imagen************************
+
+
+23. Utilizando mi base de datos en tableplus: Abrir mis configuraciones
+	23.1. Name: motoRepair
+		Host: localhost (es el que se tiene en el .env)
+		Port: 5432 (en teoria es el que usa postgres, pero si se llegase a cambiar, se 
+				deberia dar click derecho en postgres de la base de datos -> properties
+				-> connection)
+		User: el mismo del .env
+		Password: el mismo del .env  
+		Database: el mismo del .env
+
+24. Se realiza la instalacion de morgan, para seber que peticiones se estan haciendo en el
+	backend, sin embargo solo se utiliza durante el desarrollo. (npm i morgan)
+
+ 	24.1. Dentro del archivo server dentro de los middlewares, se configurara morgan,
+		estar atento si se importó. A partir de este procedimiento en el cmd se mostrara
+		que CRUD se utilizo.
+
+		***************const morgan = require('morgan')************
+		  
+		middlewares() {
+    			this.app.use(morgan('dev'));
+    			this.app.use(cors());
+    			this.app.use(express.json());
+ 		}
+
+
+25. Variables de Entorno: Para la configuracion de estas variables, nos vamos a dirigir a 
+	scripts que se encuentra dentro del package.json y copiamos lo siguiente:
+	
+	
+  	"scripts": {
+    		"test": "echo \"Error: no test specified\" && exit 1",
+    		"start:dev": "nodemon app.js",
+    		"start:prod": "SET NODE_ENV=production&nodemon app.js"
+  	},
+	 
+	
+	25.1. Dentro del archivo .env vamos a pegar el siguiente codigo
+
+		NODE_ENV = development
+
+	
+	25.2. En mi archivo server dentro de middlewares el this.app.use(morgan("dev"))
+		sera actualizado quedando de la siguiente forma. 
+
+
+        	if (process.env.NODE_ENV === 'development') {
+            	this.app.use(morgan('dev'));
+        	}
+
+		A partir de ahora para entrar a nodemon en modo desarrollador se lo hara mediante
+		
+		**************npm run start:dev***************
+
+26. Debido a que la puesta del try y el catch no es necesaria pero si se debe aprender, 
+solo pondrmos uno como ejemplo, lo demas lo vamos a omitir.
+
+ 	
+exports.findUserHistoryById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findOne({
+      where: {
+        id,
+        status: true,
+      },
+    });
+
+    const transactions = await Transfer.findAll({
+      where: {
+        senderUserId: id,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'The user was not found',
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      message: 'The historial was fount successfully',
+      user,
+      transactions:
+        transactions === null
+          ? res.status.json({ message: 'The user didnt make any transaction' })
+          : transactions,
+    });
+  } catch (error) {
+	console.log(error)
+    return res.status(500).json({
+      status: 'fail',
+      message: 'Internal server error',
+    });
+  }
+};
+
+
+
+27. ********************Middlewares*********************
+
+TIP: Si quieres que cualquier dato de los modulos sea unico se utiliza "unique: true" ej:
+
+
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true	
+  },
+
+Cuando se repite codigo es decir cuando se copia y pega algo, existe el codigo DRY que
+quiere decir dont repeat yourself, a partir de aca nacen los middlewares.
+
+	27.1. Creamos en la raiz una carpeta denominada middlewares, y dentro un archivo
+	con nombre de acuerdo a los controladores, ejemplo users.middlewares.js
+	
+	Se crea la funcion y se exporta la funcion con los siguientes parametros:
+	
+	 exports.validUserById = (req, res, next) => {
+
+	} 
+
+	
+	Copiando lo que se repite en los controladores como encontrar un producto por id, 
+	actualizar y eliminar, se debe ver que el modelo sea importado el codigo quedaria
+	de la siguiente manera (probablemente aqui sea obligatorio el try y el catch debido):
+	a que es funcion asincrona
+
+
+const User = require('../models/user.model');
+
+exports.validUserById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findOne({
+      where: {
+        id,
+        status: 'available',
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'The user was not found',
+      });
+    }
+     req.user = user; //El user despues del igual depende de la constante creada.
+	next() //Esto es muy importante, no olvidar colocarlo, lo pasa del middleware al controlador
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal Server Error',
+    });
+  }
+};
+
+
+	27.2. Ahora dentro de la ruta de usuarios en este caso, procederemos a pegar el nombre
+		del middlewares que creamos. Se lo va a pegar en GET by Id, PATCH y DELETE depende
+		no siempre va a ser asi. (validUserById // no olvidar importar dentro de rutas)
+
+opll98i
+		router.delete('/:id', validUserById, desableUserById);
+
+
+
+	27.3. El controller dependiendo de lo que se vaya a alterar quedaria por ejemplo
+		para el caso del delete algo asi:
+
+exports.desableUserById = catchAsync(async (req, res) => {
+  
+  const { user } = req; //(ESTO ES LO NUEVO)
+ 
+  await user.update({ status: 'disabled' });
+
+  res.status(200).json({
+    status: 'success',
+    massagge: 'The user has been disabled',
+  });
+});
+
+
+
+***********************************Validacion del email del usuario**********************************
+
+
+Que pasaria si queremos crear un usuario con una contrasena repetida, eso no se deberia
+hacer, entonces se debe validar si ese email ya existe.
+
+28. El siguiente codigo valida si el usuario tiene la cuenta desactivada o si ya tiene
+	una cuenta. Este validador se lo coloca debajo del validador por id. (Este
+	middleware probablemente solo se usa con los usuarios)
+
+exports.validIfExistUserEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({
+      where: {
+        email: email.toLowerCase() *******No olvidar el lower case que evita correos alterados por mayusculas y minusculas*******
+      },
+    });
+
+    if (user && user.status === 'disabled') {
+      await user.update({ status: 'available' });
+
+      return res.status(400).json({
+        status: 'Error',
+        message: 'User had a disabled account, now is available',
+      });
+    }
+
+    if (user) {
+      return res.status(400).json({
+        status: 'Error',
+        message: 'The email user already exist',
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.log(error);
+    res.tatus(500).json({
+      status: 'fail',
+      message: 'Internal Server Error',
+    });
+  }
+};
+
+	28.1. Copiar la funcion validador de email en el archivo rutas de usuarios en el 
+		post de usuarios.
+
+		router.post('', validIfExistUserEmail, createUser);
+
+
+***********************************EXPRESS VALIDATOR**********************************
+
+
+Esto se utiliza cuando estamos postiando algo o actualizandolo ya que debemos tener datos
+obligatorios, por ejemplo si queremos crear un usuario debemos mandarle el email, el nombre
+y demas cosas obligatoriamente.
+
+
+29. Instalar la siguiente paqueteria que me ayudara a validar omisiones npm install e
+xpress-validator
+
+
+	29.1. Importar check en la ruta a la que se va a validar.
+		
+	const { check } = require('express-validator');
+
+
+router.post(
+  '',
+  [
+    check('name', 'The name is requiered').not().isEmpty(),
+    check('email', 'The email is requiered').not().isEmpty(),
+    check('email', 'The email must be a correct format').isEmail(),
+    check('password', 'The password is requiered').not().isEmpty(),
+  ],
+  validIfExistUserEmail,
+  createUser
+);
+
+router.patch(
+  '/:id',
+  [
+    check('name', 'The name is requiered').not().isEmpty(),
+    check('email', 'The email is requiered').not().isEmpty(),
+    check('email', 'The email must be a correct format').isEmail(),
+  ],
+  validUserById,
+  updateUserById
+);
+
+
+
+	29.2. Dentro de mi carpeta middlewares, se debe crear el archivo validateFields.js
+		
+		el codigo es el siguiente:
+
+
+const { validationResult } = require('express-validator');
+
+exports.validateFields = (req, res, next) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: 'error',
+      errors: errors.mapped(),
+    });
+  }
+  next();
+};
+
+
+29.3. Mandar la funcion realizada en el post y patch
+	
+
+router.post(
+  '',
+  [
+    check('name', 'The name is requiered').not().isEmpty(),
+    check('email', 'The email is requiered').not().isEmpty(),
+    check('email', 'The email must be a correct format').isEmail(),
+    check('password', 'The password is requiered').not().isEmpty(),
+  ],
+  *********validateFields,***********
+  validIfExistUserEmail,
+  createUser
+);
+
+***************************************************************************************
+
+La clase del viernes 27/01/2023 se realizó el validIfExistUserEmail del user.middlewares.js
+
+instalacion de express validator en caso de que el front no mande el correo al crear el usuario
+npm i express validator
+[
+        check('username', 'The username must be mandatory').not().isEmpty(),
+        check('email', 'The email must be mandatory').not().isEmpty(),
+        check('email', 'The email must be a correct format').isEmail(),
+        check('password', 'The password must be mandatory').not().isEmpty(),
+    ],
+
+****************************************************************************************
+
+
+***********************************ERROR HANDLING***************************************
+
+El error handling soluciona aquellos errores que se colocan en el try y el catch, este
+ha sabido tomar aquellos errores que no sean necesariamente 500 y los tratan como si
+lo fueran.
+
+
+Ejemplo: El error en el que uno por ejemplo intenta a ingresar algo en el role que no 
+ha sido solicitado, se lo debe cambiar:
+
+{
+    "name": "Felipe Espana", 
+    "email": "felipe@espol.edu.ec", 
+    "password": "felipe2023",
+    "role": "client****yyy***" //Supongamos que se pasa este error poniendole yyy a client
+}
+
+Este error se denomina 22P02
+
+
+Clases de errores:
+
+****************************Error Handling in Express*********************************
+
+- Errores Operacionales: Son problemas que podemos predecir y que inevitablemente sucederan
+  en el futuro, y se los debe manejar con anticipacion. No tiene que ver con errores de
+  nuestro codigo. 
+
+  Dependen del usuario, sistema o de la red. Errores como acceder a una ruta no valida,
+  ingrese datos no validos o la aplicacion no se conecte a la base de datos.
+
+- Errores de Programacion: Errores que cometen los desarrolladores, por ejemplo tratar 
+  de leer una variable que viene indefinida, usar el await sin el async. Estos errores
+  son los mas dificiles de encontrar y manejar.
+
+
+30. Se hara un middlewares de manejo de errores, que atrapen dicho errores de la aplicacion
+brindando al cliente una respuesta de lo que sucedio. La ventaja es centralizaremos en un
+solo lugar los errores y separar la logica de manejo de errores.
+
+
+	Instalamos npm i ndb
+
+	30.1. En los scripts del package.json procederemos a escribir lo siguiente:
+	"debug": "ndb app.js"
+
+	30.2. En mi consola vamos a escribir npm run debug, despues de esto se va a abrir
+	una ventana emergente, en el que puedes colocar breakpoints, y correr el codigo
+	y empezar a debuguear.
+
+	
+31. Primer manejo de error: Verificar que las rutas puestas sean las correctas.
+
+
+	31.1.Creamos una carpeta util en mi raiz. Junto con un archivo appError.js, escribimos
+	lo siguiente:
+
+	class AppError extends Error {
+  		constructor(message, statusCode) {
+    		super(message);
+
+    		this.statusCode = statusCode;
+    		this.status = `${statusCode}`.startsWith('4') ? 'error' : 'fail';
+    		this.isOperational = true;
+
+    		Error.captureStackTrace(this, this.constructor);
+  		}
+	}
+
+	module.exports = AppError;
+ 
+	31.2. Dentro del routes() {} en el server
+
+    	this.app.all('*', (req, res, next) => {
+      	return next(new AppError(`Can't find ${req.originalUrl} on this server`));
+   	 }); //Importar appError
+	
+	this.app.use(globalErrorHandler); //No olvidar importar
+
+	
+	31.3. Vamos a crear un controlador general de errores.
+	
+	
+	
+const AppError = require('../utils/appError');
+
+const handleCastError22P02 = err => {
+  message = 'Some type of data sent does not match was expected';
+  return new AppError(message, 400);
+};
+
+****************************************************************
+const sendErrorDev = (err, res) => {
+  res.status(err.statusCode).json({
+    status: err.status,
+    error: err,
+    message: err.message,
+    stack: err.stack,
+  });
+};
+****************************************************************
+
+const sendErrorProd = (err, res) => {
+  if (err.isOperational) {
+    res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+    });
+  } else {
+    console.log('ERROR', err);
+    res.status(500).json({
+      status: 'fail',
+      message: 'Something went wrong',
+    });
+  }
+};
+
+	const globalErrorHandler = (err, req, res, next) => {
+  		err.statusCode = err.statusCode || 500;
+  		err.status = err.status || 'fail';
+
+  		if (process.env.NODE_ENV === 'development') {
+    			sendErrorDev(err, res);
+  		}
+
+  		if (process.env.NODE_ENV === 'production') {
+    			let error = { ...err };
+
+    		if (error.parent.code === '22P02') {
+      		error = handleCastError22P02(error);
+    		}
+
+    		sendErrorProd(error, res);
+  		}
+	};
+
+
+		module.exports = globalErrorHandler;
+
+
+
+	31.4. A partir de ahora los middlewares pueden ser actualizados.
+	
+    	if (!user) {
+      	return next(new AppError('The user was not found', 404));
+    	}
+
+	31.5. Dentro de la carpeta utils, creamos el archivo catchAsync.js en el que copiamos
+	el siguiente codigo:
+
+	   const catchAsync = fn => {
+  		return (req, res, next) => {
+    			fn(req, res, next).catch(next);
+  			};
+		};
+
+		module.exports = catchAsync;
+
+	
+	31.6. Los controlladores se actualizaran puesto que ahora contaran con la nueva
+	funcion catchAsync (no olvidar importarlo y poner el next dentro del async).
+
+	 exports.findUserById = catchAsync(async (req, res, next) => {
+  		const { user } = req;
+
+  		res.status(200).json({
+    			status: 'success',
+    			message: 'The user was found successfully',
+    			user,
+  		});
+	});
+
+
+
+	31.7. Los middlewares tambien pueden ser actualizados sin el try catch. Por ejemplo
+	en el caso del repair.controllers.js
+
+	
+	const Repair = require('../models/repair.model');
+	const AppError = require('../utils/appError');
+	const catchAsync = require('../utils/catchAsync');
+
+	exports.validRepairById = catchAsync(async (req, res, next) => {
+  		const { id } = req.params;
+
+  		const repair = await Repair.findOne({
+    			where: {
+      			id,
+      			status: 'pending',
+    			},
+  		});
+
+  		if (!repair) {
+    			return next(new AppError('The repair was not fount', 404));
+  		}
+
+  		req.repair = repair;
+  		next();
+	});
+
+
+32. ***************************Autorizacion y Autenticacion********************************
+
+*******Pasos para el login*******
+
+Paso 1: El cliente en el frontend crea un usuario con su email y password.
+Paso 2: El servidor recibe y crea una unica JWT siempre y cuando el 
+	  usuario y la contrasena tengan el formato correcto (JSON Web Token)
+Paso 3: Se envía dicho token
+Paso 4: Lo recibe el cliente y lo almacena en una cookie o en el localstorage para hacer
+	  el LOGIN.
+
+******Pasos para el acceso******
+
+-----Rutas Publicas: No necesitan Acceso
+
+-----Rutas Protegidas: Necesitan acceso
+
+Paso 5: El cliente o frontend solicita acceso a ciertas rutas protegidas mediante GET y
+	  algun JWT.
+Paso 6: El servidor revisa, si el token es valido, se permite el acceso.
+Paso 7: Se envia la informacion protegida al front.
+
+Para mas info sobre jwt.io
+
+El JWT se divide en headers (Tipo de token), payload (la data basta con el id) y firma 
+(la firma es unica).
+
+	
+	32.1. Crear un archivo dentro de la carpeta rutas que se llame auth.routes.js
+
+	32.2. Instalar npm i jsonwebtoken & npm i bcryptjs
+	
+	32.3. Crear un archivo dentro de la carpeta controllers que se llame auth.controllers.js 
+  	
+	32.4. En el servidor dentro de path anadimos el valor auth con la siguiente ruta:
+
+	    this.paths = {
+      	users: '/api/v1/users',
+      	repairs: '/api/v1/repairs',
+      	auth: "/api/v1/auth"
+    		};
+
+	32.5. Se configura la ruta: 
+	
+	const { Router } = require('express');
+
+	const router = Router();
+
+	module.exports = {
+  		authRouter: router,
+	};
+	
+
+	32.6. Retornando al server ir a routes y siempre encima de los errores van las rutas
+	es decir:
+
+	
+  	routes() {
+    		this.app.use(this.paths.users, UsersRouter);
+    		this.app.use(this.paths.repairs, RepairsRouter);
+    		this.app.use(this.paths.auth, authRouter);
+
+    		this.app.all('*', (req, res, next) => {
+      		return next(new AppError(`Can't find ${req.originalUrl} on this server`));
+    		});
+
+    		this.app.use(globalErrorHandler);
+  	}
+
+
+	32.7. El POST de usuario se lo va a cortar de la ruta usuarios y se lo va a pegar 
+	debajo de la constante router, importar lo correspondiente. Finalmente, la ruta
+	del post va a cambiar ("/signup"), quedando de la siguiente manera:
+
+
+const { Router } = require('express');
+const { check } = require('express-validator');
+const { createUser } = require('../controllers/auth.controllers');
+const { validIfExistUserEmail } = require('../middlewares/users.middlewares');
+const { validateFields } = require('../middlewares/validateField');
+
+const router = Router();
+
+router.post(
+  '/signup',
+  [
+    check('name', 'The name is requiered').not().isEmpty(),
+    check('email', 'The email is requiered').not().isEmpty(),
+    check('email', 'The email must be a correct format').isEmail(),
+    check('password', 'The password is requiered').not().isEmpty(),
+  ],
+  validateFields,
+  validIfExistUserEmail,
+  createUser
+);
+
+module.exports = {
+  authRouter: router,
+};
+
+
+
+	32.8. De igual forma con el create user del controlador, sera trasladado al auth
+	controller importar el catchasync y el User, ojo que en la ruta auth se debe cambiar 
+	la importacion del create user del nuevo controlador. Eliminar la constante que lleva 
+	el await, quedando el codigo asi:
+	
+	const User = require('../models/user.model');
+	const catchAsync = require('../utils/catchAsync');
+
+	exports.createUser = catchAsync(async (req, res, next) => {
+  		const { name, email, password, role } = req.body;
+
+  		res.status(201).json({
+    			status: 'success',
+    			massagge: 'The product was created successfully',
+    			newUser,
+  			});
+		});
+
+
+
+	32.9. El auth controller ahora se ha actualizado para encriptar la contrasena quedando
+	de la siguiente manera:
+
+
+	const User = require('../models/user.model');
+	const catchAsync = require('../utils/catchAsync');
+	const bcrypt = require('bcryptjs');
+
+	exports.createUser = catchAsync(async (req, res, next) => {
+  		const { name, email, password, role } = req.body;
+
+  		const user = new User({ name, email, password, role }); //Crea una instancia de la clase user
+
+  		const salt = await bcrypt.genSalt(10); //Encripta la contrasena
+  		user.password = await bcrypt.hash(password, salt);
+
+  		await user.save(); //Guarda la info en la base de datos
+
+  		const token = await generateJWT(user.id); //Esta linea sera agregada despues que se 
+		haya realizado los pasos de la 33.
+
+  		res.status(201).json({
+    			status: 'success',
+    			massagge: 'The product was created successfully',
+    			user:{ //Se debe evitar enviar password, por eso se no se mandó
+				id: user.id,
+      			username: user.username,
+      			email: user.email,
+      			role: user.role,
+			},
+			token
+  			});
+		});
+
+	32.10. En el postman dentro de la carpeta usuarios trasladar la peticion post a una nueva
+	carpeta denominada auth y cambiar la ruta por localhost:3000/api/v1/auth/signup
+	hacer la peticion y se van a dar cuenta que en table plus la contrasena se ha encriptado
+
+
+33. Generando el JWT. 
+	
+	33.1.Entrando al siguiente link https://smalldev.tools/base64-encoder-online, escribiremos una frase
+	que se encriptara copiamos esa encriptacion y la pegamos en los .env en la variable 
+	
+	SECRET_JWT_SEED = RGlzZnJ1dGEgZWwgbW9tZW50bywgYWhvcnJhLCB2aWFqYSwgZXN0dWRpYSB5IGNvbm9jZSBtdWNoYSBnZW50ZS4g
+
+	JWT_EXPIRE_IN=2h
+
+	33.2. Dentro de la carpeta util se procedera a crear el archivo jwt.js generandose el siguiente
+	codigo:
+
+const jwt = require('jsonwebtoken');
+
+const generateJWT = id => {
+  return new Promise((resolve, reject) => {
+    const payload = { id };
+    jwt.sign(
+      payload,
+      process.env.SECRET_JWT_SEED,
+      { expiresIn: process.env.JWT_EXPIRE_IN },
+      (err, token) => {
+        if (err) {
+          console.log(err);
+          reject(err);
+        }
+        resolve(token);
+      }
+    );
+  });
+};
+
+module.exports = generateJWT;
+
+
+
+**************************************Login del usuario*****************************************
+
+
+34. Procederemos en el archivo auth routes, a escribir debajo del router.post("/signup") el
+siguiente codigo para el login.
+
+router.post(
+  '/login',
+  [
+    check('email', 'The email is requiered').not().isEmpty(),
+    check('email', 'The email must be a correct format').isEmail(),
+    check('password', 'The password is requiered').not().isEmpty(),
+    validateFields,
+  ],
+  login //no olvidar importar cuando se haya hecho el paso 34.1
+);  
+
+	34.1. Dentro del auth controller, debajo del export.createUser, escribiremos el siguiente
+	codigo para el login:
+
+exports.login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({
+    where: {
+      email: email.toLowerCase(),
+      status: 'available',
+    },
+  });
+
+  if (!user) {
+    return next(new AppError('The user could not be found', 404));
+  }
+
+  if (!(await bcrypt.compare(password, user.password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
+
+  const token = await generateJWT(user.id);
+
+  res.status(200).json({
+    status: 'success',
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+  });
+});
+
+
+
+35. Actualizacion de Contrasenas
+	
+	35.1. En la ruta de usuarios crearemos un nuevo router
+	
+
+	router.patch("/password/:id", 
+	[
+  		check("currentPassword", "The current password must be mandatory").not().isEmpty(),
+  		check("newPassword", "The new password must be mandatory").not().isEmpty(),
+  		validateFields, //siempre va acompanando al check
+		 validUserById,
+	] ,
+	updatePassword)
+
+	35.1. En el controlador de usuarios se copia la funcion y se la arma de acuerdo con el
+	nombre escrito en la ruta password/:id, no olvidar importarla en las rutas.
+
+	exports.updatePassword = catchAsync(async (req, res, next) => {});
+
+
+	35.2. La nueva funcion luego de haberse copiado el bcrypt para el error y para encriptar
+	quedaria de la siguiente forma:
+
+	exports.updatePassword = catchAsync(async (req, res, next) => {
+  		const { user } = req;
+  		const { currentPassword, newPassword } = req.body;
+
+  		if (!(await bcrypt.compare(currentPassword, user.password))) {
+    			return next(new AppError('Incorrect email or password', 401));
+  		}
+
+  		const salt = await bcrypt.genSalt(10);
+  		const encriptedPassword = await bcrypt.hash(newPassword, salt);
+		});
+
+	
+	35.3. El modelo de usuarios se alterara de la siguiente forma, debajo de password. Y realizar
+	el force: true en el server.
+	
+  	passwordChangedAt: {
+    		type: DataTypes.DATE,
+    		allowNull: true,
+  	},	
+	
+
+	35.4. Dado que ya se ha actualizado el modelo, se procedera actualizar la contrasena, y 
+	enviar la informacion en el postman. (new Date() coloca la fecha actual)
+	
+	
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  const { user } = req;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!(await bcrypt.compare(currentPassword, user.password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const encriptedPassword = await bcrypt.hash(newPassword, salt);
+
+  await user.update({
+    password: encriptedPassword,
+    passwordChangedAt: new Date(),
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'The user password was updated successfully',
+  });
+});
+
+
+
+*************************************Proteccion de Rutas****************************************
+
+
+36. Creamos un archivo llamado auth.middlewares.js y en el creamos la funcion protect.
+
+ 
+const catchAsync = require('../utils/catchAsync');
+
+exports.protect = catchAsync(async (req, res, next) => {
+  //1. Obtener el token y revisarlo
+
+  let token;
+
+  //2. Verificar el token
+  //3. Verificar que el usuario exista
+  //4. Verificar si el usuario ha cambiado la contraseña despues de que el token haya expirado.
+});
+
+
+	36.1. Importar la palabra protect dentro de las creaciones en las rutas, por ejemplo en el 
+	caso de la motos sera para la creacion de la reparaciones, tambien puede ser en la creacion
+	de las categorias, ya que esto solo se puede realizar bajo la autorizacion del usuario 
+	logueado.  
+
+	router.post(
+  '',
+  [
+    check('date', 'The date is requiered').not().isEmpty(),
+    check('date', 'The date must be a correct format').isDate(),
+    check('userId', 'The userId is requiered').not().isEmpty(),
+    check('userId', 'The must be a correct format').isNumeric(),
+  ],
+  validateFields,
+  protect, *********************************************************
+  createRepair
+);
+
+
+	36.2. En la peticion postman de manera no general sino individual para desactivar la 
+	proteccion en la parte de los headers de la ruta de los repairs. escribimos debajo de KEY
+	"Authorization", y debajo del VALUE Bearer .....(token).... que se copia del login.
+
+	
+	36.3 El auth middlewares, sera ahora actualizado de la siguiente forma, aqui se genera el
+	paso 1 que consiste en obtener y revisar el token:
+
+
+const { promisify } = require('util');
+const jwt = require('jsonwebtoken');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
+const User = require('../models/user.model');
+
+exports.protect = catchAsync(async (req, res, next) => {
+  //1. Obtener el token y revisarlo
+
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next(
+      new AppError('You are not logged in! Please log in to get access', 401)
+    );
+  }
+
+  //2. Verificar el token
+  const decoded = await promisify(jwt.verify)(
+    token,
+    process.env.SECRET_JWT_SEED
+  );
+
+  //3. Verificar que el usuario exista
+
+  const user = await User.findOne({
+    where: {
+      id: decoded.id,
+      status: 'available',
+    },
+  });
+
+  if (!user) {
+    return next(
+      new AppError('The owner of this token it not longer available', 401)
+    );
+  }
+  //4. Verificar si el usuario ha cambiado la contraseña despues de que el token haya expirado.
+
+  if (user.passwordChangedAt) {
+    const changedTimeStamp = parseInt(
+      user.passwordChangedAt.getTime() / 1000,
+      10 /*division base 10*/
+    );
+
+    if (decoded.iat < changedTimeStamp) {
+      return next(
+        new AppError('User recently changed password!, please login again', 401)
+      );
+    }
+  }
+
+  req.sessionUser = user;  
+
+next();
+});
+
+
+
+37. Dado que el auth.middlewares ha sido creado, se han realizado ciertas actualizaciones en el
+error controller.
+
+
+const AppError = require('../utils/appError');
+
+const handleCastError22P02 = err => {
+  message = 'Some type of data sent does not match was expected';
+  return new AppError(message, 400);
+};
+
+const handleJWTError = () => {
+  new AppError('Invalid Token. Please login again!', 401);
+};
+
+const handleJWTExpiredError = () => {
+  new AppError('Your token has expired! Please login again', 401);
+};
+
+const sendErrorDev = (err, res) => {
+  res.status(err.statusCode).json({
+    status: err.status,
+    error: err,
+    message: err.message,
+    stack: err.stack,
+  });
+};
+
+const sendErrorProd = (err, res) => {
+  if (err.isOperational) {
+    res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+    });
+  } else {
+    console.log('ERROR', err);
+    res.status(500).json({
+      status: 'fail',
+      message: 'Something went wrong',
+    });
+  }
+};
+
+const globalErrorHandler = (err, req, res, next) => {
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'fail';
+
+  if (process.env.NODE_ENV === 'development') {
+    sendErrorDev(err, res);
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    let error = { ...err };
+
+    if (!error.parent?.code) {
+      error = err;
+    }
+
+    if (error.parent?.code === '22P02') {
+      error = handleCastError22P02(error);
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      error = handleJWTError(error);
+    }
+
+    if (error.name === 'TokenExpiredError') {
+      error = handleJWTExpiredError(error);
+    }
+
+    sendErrorProd(error, res);
+  }
+};
+
+module.exports = globalErrorHandler;
+
+
+
+Disclaimer!!!!
+
+En el momento en que se creo la funcion para actualizar la contrasena en el user controller, 
+no se habia importado la const bcrypt = require('bcryptjs');
+
+
+***************Colocar tokens automaticos en todas las rutas que lo necesiten*******************
+
+Esta configuracion se la realiza en el postman:
+
+En My Workspace => New => Environment => Nombrar al Environment => En initial value colocar el
+token => 
+
+
+
+38. En auth.middlewares creamos la funcion protectAccountOwner debajo del protect: Esto se hace 
+siempre que la contrasena quiera ser actualizada, antes lo podia hacer cualquiera.
+
+exports.protectAccountOwner = catchAsync(async (req, res, next) => {
+  const { user, sessionUser /*este es el dueno del token*/ } = req;
+
+  if (user.id !== sessionUser.id) {
+    return next(new AppError('You do not own this account', 401));
+  }
+  next();
+});
+
+	38.1. Esta funcion se la pasamos a los patch y deletes del user routes quedando asi:
+	
+
+	router.patch(
+  '/password/:id',
+  [
+    check('currentPassword', 'The current password must be mandatory')
+      .not()
+      .isEmpty(),
+    check('newPassword', 'The new password must be mandatory').not().isEmpty(),
+    validateFields,
+    validUserById,
+    protectAccountOwner, //verifica un usuario
+  ],
+  updatePassword
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Protección de rutas parte 2
+00:24:21
+	
+
+
+
+*************************************clase del 07/02/2023*******************************
+
+
+restirctTo()
+
+prevencion de ataques de fuerza bruta con el limiter en el constructor y el middlewares
+
+
+npm i helmet
+
+ this.app.use(helmet()) dentro de los middlewares
+
+
+npm i xss-clean
+
+const xss = require('xss-clean');
+
+this.app.use(xss());
+
+npm i hpp
+
+var hpp = require('hpp');
+
+this.app.use(hpp);
+
+
+
+
+
+
+
+
+
